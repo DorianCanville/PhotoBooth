@@ -1,0 +1,270 @@
+<div class="capture-root">
+
+  <!-- ── Fond gradient ── -->
+  <div class="bg-grad"></div>
+
+  <!-- ── Video — always in DOM ── -->
+  <video
+    #videoEl
+    autoplay
+    playsinline
+    muted
+    class="camera-feed"
+    [style.filter]="filterCss()"
+    [style.transform]="lens() === 'normal' ? 'scaleX(-1) scale(1.35)' : 'scaleX(-1)'"
+    [style.opacity]="camera.ready() ? 1 : 0"
+  ></video>
+
+  @if (!camera.ready() && !camera.error()) {
+    <div class="camera-state">
+      <div class="camera-state-icon">◉ ◉</div>
+      <div>Initialisation caméra…</div>
+    </div>
+  }
+  @if (camera.error()) {
+    <div class="camera-state">
+      <div class="camera-state-icon">◉ ◉</div>
+      <div>Caméra indisponible — {{ camera.error() }}</div>
+      <div class="camera-state-hint">Autorise la webcam pour démarrer</div>
+    </div>
+  }
+
+  <!-- ── Decoration layer ── -->
+  @if (phase() === 'preview') {
+    <app-decoration-layer></app-decoration-layer>
+  }
+
+  <!-- ── Flash ── -->
+  @if (showFlash()) { <div class="pb-flash"></div> }
+
+  <!-- ── Countdown overlay ── -->
+  @if ((phase() === 'countdown' || phase() === 'capturing') && countdownN() > 0) {
+    <div class="countdown-overlay">
+      @for (n of [countdownN()]; track n) {
+        <div class="countdown-number">{{ n }}</div>
+      }
+    </div>
+  }
+
+  <!-- ── Burst indicator ── -->
+  @if (phase() === 'capturing' && captureMode() === 'burst' && burstIdx() > 0) {
+    <div class="burst-indicator pb-glass">
+      Rafale · {{ burstIdx() }} / 4
+    </div>
+  }
+
+  <!-- ── TOP BAR (preview only) ── -->
+  @if (phase() === 'preview') {
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <!-- Décoration -->
+        <button class="pb-pill-btn" [class.active]="showPicker()" (click)="showPicker.set(!showPicker())">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg>
+          @if (decoService.decorations().length > 0) {
+            Décorations ({{ decoService.decorations().length }})
+          } @else {
+            Décoration
+          }
+          @if (decoService.officialDeco()?.enabled) { · 🔒 }
+        </button>
+
+        @if (decoService.decorations().length > 0) {
+          <button class="pb-pill-btn danger" (click)="decoService.clear()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
+            Tout effacer ({{ decoService.decorations().length }})
+          </button>
+        }
+
+        @if (decoService.officialDeco()) {
+          <button class="pb-pill-btn" [class.active]="decoService.officialDeco()?.enabled" (click)="toggleOfficial()">
+            {{ decoService.officialDeco()?.enabled ? '🔒' : '🚫' }} Officielle {{ decoService.officialDeco()?.enabled ? 'ON' : 'OFF' }}
+          </button>
+        }
+
+        @if (decoService.adminUnlocked()) {
+          <button class="pb-pill-btn active" (click)="toggleAdmin()">🔓 Quitter admin</button>
+          <button class="pb-pill-btn" (click)="openAdmin.emit()">⚙ Réglages</button>
+        } @else {
+          <button class="pb-pill-btn" (click)="toggleAdmin()">🔒 Admin</button>
+        }
+      </div>
+
+      <div class="top-bar-right">
+        <button class="pb-pill-btn" (click)="openGallery.emit()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="1.5"/><path d="M3 17l5-4 4 3 4-5 5 6"/></svg>
+          Galerie ({{ photoCount() }})
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── CONTROL DECK — expanded ── -->
+  @if (phase() === 'preview' && !controlsCollapsed() && !decoService.draftSticker()) {
+    <div class="control-deck pb-glass">
+      <!-- Left: Mode + Objectif -->
+      <div class="deck-left">
+        <div class="deck-col">
+          <span class="pb-label">Mode</span>
+          <div class="pb-chip-group">
+            @for (m of captureModes; track m) {
+              <button class="pb-chip" [class.active]="captureMode() === m" (click)="captureMode.set(m)">
+                @if (m === 'single') {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3l2-2h8l2 2h3v12H3z"/><circle cx="12" cy="13" r="4"/></svg>
+                  Photo
+                } @else {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="14" rx="1.5"/><path d="M7 3h13v13"/></svg>
+                  Rafale ×4
+                }
+              </button>
+            }
+          </div>
+        </div>
+        <div class="deck-col">
+          <span class="pb-label">Objectif</span>
+          <div class="pb-chip-group">
+            @for (l of lensModes; track l) {
+              <button class="pb-chip" [class.active]="lens() === l" (click)="changeLens(l)">
+                {{ l === 'normal' ? 'Classique' : 'Grand angle' }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="deck-divider"></div>
+
+      <!-- Center: timer + shutter -->
+      <div class="deck-center">
+        <div class="timer-row">
+          @for (t of timerPresets; track t) {
+            <button class="timer-btn" [class.active]="timerSeconds() === t" (click)="timerSeconds.set(t)">{{ t }}s</button>
+          }
+        </div>
+        <button class="shutter-btn" (click)="triggerCapture()" [disabled]="!camera.ready()">
+          <div class="shutter-inner">
+            @if (captureMode() === 'burst') {
+              <span class="shutter-label">×4</span>
+            } @else {
+              <div class="shutter-dot"></div>
+            }
+          </div>
+        </button>
+      </div>
+
+      <!-- Collapse button -->
+      <button class="collapse-btn" (click)="controlsCollapsed.set(true)" aria-label="Réduire les contrôles">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </div>
+  }
+
+  <!-- ── CONTROL DECK — collapsed ── -->
+  @if (phase() === 'preview' && controlsCollapsed() && !decoService.draftSticker()) {
+    <div class="control-deck-mini pb-glass">
+      <button class="pb-btn" (click)="controlsCollapsed.set(false)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+        Réglages
+      </button>
+      <button class="shutter-btn shutter-sm" (click)="triggerCapture()" [disabled]="!camera.ready()">
+        <div class="shutter-inner">
+          @if (captureMode() === 'burst') {
+            <span class="shutter-label">×4</span>
+          } @else {
+            <div class="shutter-dot"></div>
+          }
+        </div>
+      </button>
+      <div class="mini-info">{{ timerSeconds() }}s · {{ captureMode() === 'burst' ? '×4' : '1' }}</div>
+    </div>
+  }
+
+  <!-- ── Decoration picker panel ── -->
+  @if (showPicker() && phase() === 'preview' && !decoService.draftSticker()) {
+    <app-decoration-picker
+      (close)="showPicker.set(false)"
+      (importSticker)="onImportSticker($event)"
+      (editSticker)="onEditSticker($event)"
+      (openOfficial)="onOpenOfficial()"
+    ></app-decoration-picker>
+  }
+
+  <!-- ── Admin sticker placement panel ── -->
+  @if (decoService.draftSticker(); as draft) {
+    <div class="draft-panel pb-glass">
+      <div class="draft-info">
+        <div class="draft-eyebrow">🔓 MODE ADMIN — {{ draft.editId ? 'MODIFICATION' : 'PLACEMENT' }}</div>
+        <div class="draft-name">{{ draft.editId ? 'Modifie' : 'Place' }} « {{ draft.label }} »</div>
+      </div>
+      <div class="draft-divider"></div>
+      <button class="draft-lock" (click)="toggleDraftLock()">
+        <span class="draft-switch" [class.on]="draft.lockedPosition"><span class="draft-knob"></span></span>
+        <span>Verrouiller position {{ draft.lockedPosition ? '🔒' : '🔓' }}</span>
+      </button>
+      <div class="draft-divider"></div>
+      <div class="draft-actions">
+        <button class="pb-btn" (click)="cancelDraft()">Annuler</button>
+        <button class="pb-btn primary" (click)="validateDraft()">✓ {{ draft.editId ? 'Enregistrer' : 'Valider le sticker' }}</button>
+      </div>
+    </div>
+  }
+
+  <!-- ── PIN modal ── -->
+  @if (pinOpen()) {
+    <app-pin-modal
+      [title]="pinPurpose() === 'official' ? 'Décoration officielle' : 'Mode admin'"
+      [subtitle]="pinPurpose() === 'official' ? 'Entre le code admin pour gérer la décoration officielle' : 'Entre le code admin pour importer des stickers, gérer les textes et la décoration officielle'"
+      (success)="onPinSuccess()"
+      (cancel)="pinOpen.set(false)"
+    ></app-pin-modal>
+  }
+
+  <!-- ── Official decoration editor ── -->
+  @if (officialEditorOpen()) {
+    <app-official-editor
+      [current]="decoService.officialDeco()"
+      (save)="saveOfficial($event)"
+      (remove)="removeOfficial()"
+      (close)="officialEditorOpen.set(false)"
+    ></app-official-editor>
+  }
+
+  <!-- ── REVIEW ── -->
+  @if (phase() === 'review') {
+    <div class="review-overlay">
+      <div class="review-inner">
+        <div class="review-header">
+          <div class="pb-label">{{ captureMode() === 'burst' ? 'Rafale' : 'Photo' }}</div>
+          <div class="review-title">Tu la gardes ?</div>
+        </div>
+
+        <div class="review-photos">
+          @for (p of capturedPhotos(); track $index) {
+            <div class="review-photo-wrap">
+              <img [src]="p.dataUrl" class="review-thumb" />
+            </div>
+          }
+        </div>
+
+        <!-- Filter selector in review -->
+        <div class="review-filter-row">
+          <span class="pb-label">Filtre</span>
+          <div class="pb-chip-group">
+            @for (f of filterList; track f.value) {
+              <button class="pb-chip" [class.active]="reviewFilter() === f.value" (click)="reviewFilter.set(f.value)">{{ f.label }}</button>
+            }
+          </div>
+        </div>
+
+        <div class="review-actions">
+          <button class="pb-btn danger" (click)="retakeAll()">Refaire</button>
+          <button class="pb-btn" (click)="keep()">Garder</button>
+          <button class="pb-btn primary" (click)="keep()">🖨 Garder &amp; imprimer</button>
+        </div>
+
+        <button class="review-cancel" (click)="retakeAll()">Annuler la prise</button>
+      </div>
+    </div>
+  }
+
+</div>

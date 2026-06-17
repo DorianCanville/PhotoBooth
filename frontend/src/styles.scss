@@ -1,0 +1,233 @@
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button:focus, button:focus-visible { outline: none; }
+
+/* ── CSS variables (defaults = studio theme) ── */
+:root {
+  --pb-bg: #0c0c0e;
+  --pb-bg-grad: radial-gradient(120% 80% at 50% 110%, #1a1a1d 0%, #0c0c0e 60%);
+  --pb-surface: rgba(255,255,255,0.06);
+  --pb-surface-strong: rgba(255,255,255,0.10);
+  --pb-surface-hover: rgba(255,255,255,0.14);
+  --pb-border: rgba(255,255,255,0.10);
+  --pb-border-strong: rgba(255,255,255,0.22);
+  --pb-text: #f5f3ee;
+  --pb-text-muted: rgba(245,243,238,0.62);
+  --pb-text-faint: rgba(245,243,238,0.38);
+  --pb-accent: #d4a574;
+  --pb-accent-text: #0c0c0e;
+  --pb-danger: #e85d5d;
+  --pb-r-sm: 10px;
+  --pb-r-md: 14px;
+  --pb-r-lg: 20px;
+  --pb-r-pill: 999px;
+  --pb-shutter-bg: #f5f3ee;
+  --pb-shutter-ring: rgba(212,165,116,0.4);
+  --pb-shutter-core: #d4a574;
+  --pb-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06) inset;
+  --pb-glass: rgba(20,20,22,0.55);
+  --pb-glass-blur: blur(28px) saturate(160%);
+  --pb-font-display: 'Inter Tight', system-ui, sans-serif;
+  --pb-font-ui: 'Inter Tight', system-ui, sans-serif;
+  --pb-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --pb-label-transform: uppercase;
+  --pb-label-tracking: 0.14em;
+  --pb-label-weight: 500;
+  --pb-btn-scale: 1;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  margin: 0; padding: 0;
+  overflow: hidden;
+  background: #000;
+  font-family: var(--pb-font-ui);
+  color: var(--pb-text);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+/* ── Stage — fills viewport, responsive ── */
+.pb-stage {
+  position: fixed;
+  inset: 0;
+  background: #000;
+}
+
+.pb-stage-inner {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--pb-bg-grad);
+}
+
+/* ── Glass card ── */
+.pb-glass {
+  background: var(--pb-glass);
+  backdrop-filter: var(--pb-glass-blur);
+  -webkit-backdrop-filter: var(--pb-glass-blur);
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-r-lg);
+  box-shadow: var(--pb-shadow);
+}
+
+/* ── Pill button (top bar style) ── */
+.pb-pill-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border-radius: var(--pb-r-pill);
+  border: 1px solid var(--pb-border);
+  background: var(--pb-glass);
+  backdrop-filter: var(--pb-glass-blur);
+  -webkit-backdrop-filter: var(--pb-glass-blur);
+  color: var(--pb-text);
+  font-family: var(--pb-font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.08s;
+  white-space: nowrap;
+
+  &:active { transform: scale(0.97); }
+  &.active {
+    background: var(--pb-accent);
+    color: var(--pb-accent-text);
+    border-color: transparent;
+  }
+}
+
+/* ── Tactile button ── */
+.pb-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 22px;
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-r-md);
+  background: var(--pb-surface);
+  color: var(--pb-text);
+  font-family: var(--pb-font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.08s;
+  white-space: nowrap;
+
+  &:active { transform: scale(0.97); }
+  &:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  &.primary {
+    background: var(--pb-accent);
+    color: var(--pb-accent-text);
+    border-color: transparent;
+  }
+  &.danger { color: var(--pb-danger); border-color: var(--pb-danger); }
+}
+
+/* ── ChipGroup ── */
+.pb-chip-group {
+  display: flex;
+  gap: 0;
+  padding: 6px;
+  background: var(--pb-surface);
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-r-md);
+}
+
+.pb-chip {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--pb-r-sm);
+  background: transparent;
+  color: var(--pb-text);
+  font-family: var(--pb-font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+
+  &.active {
+    background: var(--pb-accent);
+    color: var(--pb-accent-text);
+    font-weight: 600;
+  }
+}
+
+/* ── Label ── */
+.pb-label {
+  font-size: 12px;
+  font-weight: var(--pb-label-weight);
+  letter-spacing: var(--pb-label-tracking);
+  text-transform: var(--pb-label-transform);
+  color: var(--pb-text-muted);
+  font-family: var(--pb-font-ui);
+}
+
+/* ── Modal overlay ── */
+.pb-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.pb-modal {
+  background: var(--pb-glass);
+  backdrop-filter: var(--pb-glass-blur);
+  -webkit-backdrop-filter: var(--pb-glass-blur);
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-r-lg);
+  box-shadow: var(--pb-shadow);
+  padding: 40px;
+  min-width: 480px;
+  max-width: 90%;
+}
+
+/* ── Flash ── */
+@keyframes pb-flash {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+.pb-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  animation: pb-flash 0.2s ease-out forwards;
+  pointer-events: none;
+  z-index: 200;
+}
+
+/* ── Countdown pulse (matches proto) ── */
+@keyframes count-pulse {
+  0%   { transform: scale(0.4); opacity: 0; }
+  15%  { transform: scale(1.15); opacity: 1; }
+  80%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* ── Toast in ── */
+@keyframes toast-in {
+  0%   { transform: translate(-50%, 30px); opacity: 0; }
+  100% { transform: translate(-50%, 0); opacity: 1; }
+}

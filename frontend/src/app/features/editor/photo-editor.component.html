@@ -1,0 +1,52 @@
+<div class="editor-root">
+  <div class="editor-header pb-glass">
+    <h2 class="editor-title">Éditeur photo</h2>
+    <div class="editor-header-actions">
+      <button class="pb-btn pb-btn-ghost" (click)="close.emit()">Annuler</button>
+      <button class="pb-btn pb-btn-accent" (click)="save()" [disabled]="saving()">
+        {{ saving() ? 'Enregistrement…' : 'Enregistrer copie' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="editor-canvas-area">
+    @if (previewUrl()) {
+      <div class="editor-canvas-wrap">
+        <img
+          [src]="previewUrl()!"
+          class="editor-base-img"
+          [style.filter]="filterCss()"
+        />
+        <!-- Decoration layer overlaid on the image -->
+        <app-decoration-layer></app-decoration-layer>
+      </div>
+    }
+  </div>
+
+  <div class="editor-bottom-bar pb-glass">
+    <div class="control-group">
+      <span class="control-label">Filtre</span>
+      <div class="pb-chips">
+        @for (f of filterList; track f.value) {
+          <button class="pb-chip" [class.active]="filter() === f.value" (click)="filter.set(f.value)">
+            {{ f.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <button class="pb-btn pb-btn-ghost" (click)="showPicker.set(!showPicker())">
+      🎨 Déco
+      @if (decoService.decorations().length > 0) {
+        <span class="deco-badge">{{ decoService.decorations().length }}</span>
+      }
+    </button>
+    @if (decoService.decorations().length > 0) {
+      <button class="pb-btn pb-btn-ghost" (click)="decoService.clear()">✕ Effacer</button>
+    }
+  </div>
+
+  @if (showPicker()) {
+    <app-decoration-picker (close)="showPicker.set(false)"></app-decoration-picker>
+  }
+</div>

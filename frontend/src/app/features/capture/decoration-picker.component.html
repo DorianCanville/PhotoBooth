@@ -1,0 +1,161 @@
+<div class="picker-panel pb-glass">
+  <!-- Header -->
+  <div class="picker-header">
+    <div>
+      <span class="pb-label">Décorations</span>
+      <div class="picker-title">Ajouter au cadre</div>
+    </div>
+    <button class="picker-close" (click)="close.emit()">✕</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="picker-tabs">
+    @for (t of tabs; track t) {
+      <button class="picker-tab" [class.active]="tab() === t" (click)="tab.set(t)">
+        {{ t === 'stickers' ? 'Stickers' : 'Texte' }}
+      </button>
+    }
+  </div>
+
+  <!-- Body -->
+  <div class="picker-body">
+    <!-- STICKERS -->
+    @if (tab() === 'stickers') {
+      @if (decoService.customStickers().length === 0 && !adminUnlocked) {
+        <div class="picker-empty">
+          <div class="picker-empty-icon">🎨</div>
+          <div class="picker-empty-title">Aucun sticker disponible</div>
+          <div class="picker-empty-sub">Demande à l'admin d'en importer (code 1234)</div>
+        </div>
+      }
+
+      @if (decoService.customStickers().length > 0 || adminUnlocked) {
+        <div class="sticker-head">
+          <span class="pb-label">Stickers ({{ decoService.customStickers().length }})</span>
+          @if (adminUnlocked) { <span class="admin-flag">🔓 mode admin</span> }
+        </div>
+        <div class="sticker-grid">
+          @for (s of decoService.customStickers(); track s.id) {
+            <div class="sticker-cell">
+              <button class="sticker-card" (click)="addSticker(s)">
+                <div class="sticker-thumb"><img [src]="s.dataUrl" [alt]="s.label" /></div>
+                <span class="sticker-label">{{ s.label }}</span>
+              </button>
+              @if (adminUnlocked) {
+                <div class="sticker-admin">
+                  <button class="mini-btn accent" title="Modifier (position, verrou)" (click)="editSticker.emit(s)">✎</button>
+                  <button class="mini-btn danger" title="Supprimer" (click)="deleteSticker(s.id)">✕</button>
+                </div>
+              }
+              @if (s.lockedPosition) {
+                <div class="lock-badge" title="Position verrouillée">🔒</div>
+              }
+            </div>
+          }
+          @if (adminUnlocked) {
+            <label class="sticker-import">
+              <div class="sticker-import-plus">＋</div>
+              <div class="sticker-import-text">Importer sticker</div>
+              <input type="file" accept="image/*" class="hidden-input" (change)="onStickerFile($event)" />
+            </label>
+          }
+        </div>
+      }
+    }
+
+    <!-- TEXTE -->
+    @if (tab() === 'texte') {
+      <div class="text-form">
+        <div class="form-row-col">
+          <span class="pb-label">Ton texte</span>
+          <input class="text-input" type="text" placeholder="Bon anniversaire !"
+            [(ngModel)]="textValue" (keydown.enter)="submitText()" />
+        </div>
+
+        <div class="form-row-col">
+          <span class="pb-label">Police</span>
+          <div class="font-list">
+            @for (f of textFonts; track f.value) {
+              <button class="font-opt" [class.active]="textFont === f"
+                [style.font-family]="f.value" [style.font-weight]="f.weight" (click)="textFont = f">
+                {{ f.label }} — {{ textValue.trim() || 'Aa Bb Cc' }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <span class="pb-label">Couleur</span>
+            <div class="swatches">
+              @for (c of colorPresets; track c) {
+                <button class="swatch" [style.background]="c" [class.active]="textColor === c" (click)="textColor = c"></button>
+              }
+            </div>
+          </div>
+          <div class="form-col">
+            <span class="pb-label">Fond</span>
+            <div class="swatches">
+              @for (b of bgPresets; track b) {
+                <button class="swatch" [class.swatch-none]="b === 'none'"
+                  [style.background]="b === 'none' ? 'transparent' : b" [class.active]="textBg === b" (click)="textBg = b"></button>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (editingTextId()) {
+          <div class="edit-actions">
+            <button class="pb-btn" (click)="cancelEditText()">Annuler</button>
+            <button class="pb-btn primary grow" [disabled]="!textValue.trim()" (click)="submitText()">✓ Enregistrer les modifications</button>
+          </div>
+        } @else {
+          <button class="pb-btn primary" [disabled]="!textValue.trim()" (click)="submitText()">Ajouter au cadre</button>
+        }
+
+        <!-- Saved texts library -->
+        @if (decoService.savedTexts().length > 0) {
+          <div class="saved-head">
+            <span class="pb-label">Textes enregistrés ({{ decoService.savedTexts().length }})</span>
+            @if (adminUnlocked) {
+              <button class="link-danger" (click)="clearAllTexts()">Tout supprimer</button>
+            }
+          </div>
+          <div class="saved-list">
+            @for (s of decoService.savedTexts().slice().reverse(); track s.id) {
+              <div class="saved-item">
+                <button class="saved-use" (click)="addSavedTextToFrame(s)">
+                  <span class="saved-preview"
+                    [style.font-family]="s.font" [style.font-weight]="s.weight"
+                    [style.color]="s.bg !== 'none' ? '#fff' : s.color"
+                    [style.background]="s.bg !== 'none' ? s.bg : 'transparent'"
+                    [style.padding]="s.bg !== 'none' ? '2px 10px' : '0'"
+                    [style.border-radius.px]="999">{{ s.text }}</span>
+                  @if (s.byAdmin) { <span class="saved-admin">ADMIN</span> }
+                </button>
+                @if (canDeleteText(s)) {
+                  <button class="round-btn" [class.active]="editingTextId() === s.id" title="Modifier" (click)="startEditText(s)">✎</button>
+                  <button class="round-btn danger" title="Supprimer" (click)="deleteSavedText(s.id)">✕</button>
+                } @else {
+                  <div class="round-btn locked" title="Texte admin — code requis">🔒</div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="picker-footer">
+    @if (hasAnyUserDeco) {
+      <button class="pb-btn danger full" (click)="clearAllDecos()">
+        🗑 Tout effacer les décorations
+      </button>
+    }
+    <button class="official-btn" (click)="openOfficial.emit()">
+      🔒 Décoration officielle (code requis)
+    </button>
+  </div>
+</div>

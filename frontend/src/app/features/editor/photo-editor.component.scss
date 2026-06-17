@@ -1,0 +1,91 @@
+.editor-root {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--pb-bg);
+  z-index: 90;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 48px;
+  border-bottom: 1px solid var(--pb-border);
+  flex-shrink: 0;
+}
+
+.editor-title {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.editor-header-actions {
+  display: flex;
+  gap: 16px;
+
+  .pb-btn { font-size: 18px; padding: 14px 36px; }
+}
+
+.editor-canvas-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 32px;
+}
+
+.editor-canvas-wrap {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 4/3;
+}
+
+.editor-base-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: var(--pb-radius);
+}
+
+.editor-bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 20px 48px;
+  border-top: 1px solid var(--pb-border);
+  flex-shrink: 0;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.control-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pb-text-muted);
+  white-space: nowrap;
+}
+
+.deco-badge {
+  background: var(--pb-accent);
+  color: var(--pb-accent-text);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+}

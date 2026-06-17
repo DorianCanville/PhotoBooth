@@ -1,0 +1,148 @@
+<div class="admin-overlay pb-modal-overlay">
+  <!-- PIN GATE -->
+  @if (pinPhase() === 'enter') {
+    <div class="pb-modal pin-modal">
+      <h2 class="modal-title">Mode admin</h2>
+      <p class="modal-sub">Entrez le code PIN</p>
+
+      <div class="pin-dots">
+        @for (i of [0,1,2,3]; track i) {
+          <span class="pin-dot" [class.filled]="pinInput().length > i"></span>
+        }
+      </div>
+      @if (pinError()) { <p class="pin-error">Code incorrect</p> }
+
+      <div class="pin-keypad">
+        @for (key of ['1','2','3','4','5','6','7','8','9','','0','⌫']; track key) {
+          @if (key === '') { <span></span> }
+          @else if (key === '⌫') {
+            <button class="keypad-btn" (click)="pinInput.set(pinInput().slice(0,-1))">⌫</button>
+          } @else {
+            <button class="keypad-btn" (click)="pinInput.set(pinInput() + key)" [disabled]="pinInput().length >= 4">{{ key }}</button>
+          }
+        }
+      </div>
+      <div class="pin-actions">
+        <button class="pb-btn" (click)="close.emit()">Annuler</button>
+        <button class="pb-btn pb-btn-accent" (click)="checkPin()" [disabled]="pinInput().length !== 4">OK</button>
+      </div>
+    </div>
+  }
+
+  <!-- ADMIN PANEL -->
+  @if (pinPhase() === 'unlocked') {
+    <div class="pb-modal admin-panel">
+      <div class="admin-header">
+        <div class="pb-chips">
+          @for (t of tabs; track t) {
+            <button class="pb-chip" [class.active]="activeTab() === t" (click)="activeTab.set(t)">
+              {{ t === 'settings' ? 'Paramètres' : t === 'stickers' ? 'Stickers' : t === 'textes' ? 'Textes' : 'Déco off.' }}
+            </button>
+          }
+        </div>
+        <button class="pb-btn pb-btn-ghost" (click)="close.emit()">✕</button>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      @if (activeTab() === 'settings') {
+        <div class="tab-content">
+          <div class="settings-row">
+            <label class="settings-label">Thème</label>
+            <div class="pb-chips">
+              @for (t of theme.getThemes(); track t.name) {
+                <button class="pb-chip" [class.active]="selectedTheme() === t.name" (click)="selectedTheme.set(t.name)">
+                  {{ t.label }}
+                </button>
+              }
+            </div>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Couleur accent</label>
+            <input type="color" [value]="accentColor()" (input)="accentColor.set($any($event.target).value)" class="color-picker" />
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Taille boutons ({{ buttonSize().toFixed(1) }}×)</label>
+            <input type="range" min="0.8" max="1.5" step="0.1"
+              [value]="buttonSize()" (input)="buttonSize.set(+$any($event.target).value)" class="range-input" />
+          </div>
+          <div class="settings-actions">
+            <button class="pb-btn pb-btn-accent" (click)="saveSettings()">Enregistrer</button>
+          </div>
+        </div>
+      }
+
+      <!-- STICKERS TAB -->
+      @if (activeTab() === 'stickers') {
+        <div class="tab-content">
+          <label class="pb-btn pb-btn-accent upload-label">
+            + Importer sticker
+            <input type="file" accept="image/*" class="hidden-input" (change)="onStickerFile($event)" />
+          </label>
+          @if (decoService.customStickers().length === 0) {
+            <p class="empty-msg">Aucun sticker importé.</p>
+          }
+          <div class="sticker-list">
+            @for (s of decoService.customStickers(); track s.id) {
+              <div class="sticker-item">
+                <img [src]="s.dataUrl" class="sticker-preview" />
+                <span>{{ s.label }}</span>
+                <button class="pb-btn pb-btn-ghost remove-btn" (click)="removeSticker(s.id)">✕</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- TEXTES TAB -->
+      @if (activeTab() === 'textes') {
+        <div class="tab-content">
+          @if (decoService.savedTexts().length === 0) {
+            <p class="empty-msg">Aucun texte sauvé. Ajoutez des textes depuis la capture.</p>
+          }
+          <div class="text-list">
+            @for (t of decoService.savedTexts(); track t.id) {
+              <div class="text-item">
+                <span [style.font-family]="t.font" [style.color]="t.color">{{ t.text }}</span>
+                <button class="pb-btn pb-btn-ghost remove-btn" (click)="removeText(t.id)">✕</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- DÉCO OFFICIELLE TAB -->
+      @if (activeTab() === 'officielle') {
+        <div class="tab-content">
+          <div class="settings-row">
+            <label class="settings-label">Texte</label>
+            <input class="text-input" type="text" placeholder="Texte officiel…"
+              [value]="officialText()" (input)="officialText.set($any($event.target).value)" />
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Couleur</label>
+            <input type="color" [value]="officialColor" (input)="officialColor = $any($event.target).value" class="color-picker" />
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Position X (%)</label>
+            <input type="range" min="5" max="95" [value]="officialX()" (input)="officialX.set(+$any($event.target).value)" class="range-input" />
+            <span>{{ officialX() }}%</span>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Position Y (%)</label>
+            <input type="range" min="5" max="95" [value]="officialY()" (input)="officialY.set(+$any($event.target).value)" class="range-input" />
+            <span>{{ officialY() }}%</span>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Activée</label>
+            <button class="pb-btn" [class.pb-btn-accent]="officialEnabled()" (click)="officialEnabled.set(!officialEnabled())">
+              {{ officialEnabled() ? 'Oui' : 'Non' }}
+            </button>
+          </div>
+          <div class="settings-actions">
+            <button class="pb-btn pb-btn-accent" (click)="saveOfficialDeco()">Enregistrer déco</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

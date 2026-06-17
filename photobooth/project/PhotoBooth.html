@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>PhotoBooth</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: 'Inter Tight', system-ui, sans-serif;
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+    #stage {
+      position: absolute; inset: 0;
+      width: 1920px; height: 1080px;
+      transform-origin: top left;
+      overflow: hidden;
+    }
+    #app {
+      position: absolute; inset: 0;
+    }
+    /* Hide focus outlines (touch interface) */
+    button:focus, button:focus-visible { outline: none; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="stage">
+    <div id="app"></div>
+  </div>
+
+  <script>
+    // ───────────────────────────────────────────────────────────────
+    // TWEAK_DEFAULTS — persiste via la panneau Tweaks
+    // ───────────────────────────────────────────────────────────────
+    window.TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "theme": "studio",
+      "accentOverride": "#d4a574",
+      "buttonSize": 1
+    }/*EDITMODE-END*/;
+    window.__currentTweaks = { ...window.TWEAK_DEFAULTS };
+
+    // Scale 1920x1080 to fit viewport (letterbox)
+    function fitStage() {
+      const stage = document.getElementById('stage');
+      const sx = window.innerWidth / 1920;
+      const sy = window.innerHeight / 1080;
+      const s = Math.min(sx, sy);
+      stage.style.transform = `translate(${(window.innerWidth - 1920 * s) / 2}px, ${(window.innerHeight - 1080 * s) / 2}px) scale(${s})`;
+      // Compteur pour Tweaks panel scaling
+      document.documentElement.style.setProperty('--dc-inv-zoom', String(1 / s));
+    }
+    window.addEventListener('resize', fitStage);
+    fitStage();
+  </script>
+
+  <!-- Charge les fichiers JSX dans l'ordre : themes → tweaks → ui → app → deco → main -->
+  <script type="text/babel" src="themes.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="photobooth-ui.jsx"></script>
+  <script type="text/babel" src="photobooth-app.jsx"></script>
+  <script type="text/babel" src="photobooth-deco.jsx"></script>
+  <script type="text/babel" src="photobooth-editor.jsx"></script>
+  <script type="text/babel" src="photobooth-main.jsx"></script>
+</body>
+</html>

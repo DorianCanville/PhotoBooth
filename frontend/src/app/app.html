@@ -1,0 +1,34 @@
+<div class="pb-stage">
+  <div class="pb-stage-inner">
+
+    <!-- Capture + top bar + control deck (always rendered) -->
+    <app-capture
+      [photoCount]="photoCount()"
+      (openGallery)="showGallery.set(!showGallery())"
+      (openAdmin)="showAdmin.set(true)"
+    ></app-capture>
+
+    <!-- Gallery drawer — always in DOM, slides in/out -->
+    <app-gallery
+      [open]="showGallery()"
+      (close)="showGallery.set(false)"
+      (edit)="openEditor($event)"
+      (photosChanged)="onPhotosChanged($event)"
+    ></app-gallery>
+
+    <!-- Admin modal -->
+    @if (showAdmin()) {
+      <app-admin (close)="showAdmin.set(false)"></app-admin>
+    }
+
+    <!-- Photo editor fullscreen -->
+    @if (editingPhoto()) {
+      <app-photo-editor
+        [photo]="editingPhoto()!"
+        (close)="editingPhoto.set(null)"
+        (saved)="photoCount.set(photoCount() + 1)"
+      ></app-photo-editor>
+    }
+
+  </div>
+</div>

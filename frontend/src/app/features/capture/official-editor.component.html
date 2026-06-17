@@ -1,0 +1,113 @@
+<div class="oe-backdrop">
+  <div class="oe-card">
+    <div class="oe-header">
+      <div>
+        <span class="oe-eyebrow">Mode admin 🔓</span>
+        <div class="oe-title">Décoration officielle</div>
+      </div>
+      <button type="button" class="oe-close" (click)="close.emit()">✕</button>
+    </div>
+
+    @if (draft(); as d) {
+      <!-- Selection preview -->
+      <div class="oe-preview">
+        <div class="oe-thumb">
+          @if (d.kind === 'sticker' && stickerUrl(d); as url) {
+            <img [src]="url" alt="" />
+          }
+          @if (d.kind === 'text') {
+            <span [style.font-family]="d.font" [style.color]="d.color" [style.font-weight]="d.weight">{{ d.text }}</span>
+          }
+          @if (d.kind === 'image') {
+            <img [src]="d.imageUrl || compositing.getCached(d.sourceId ?? d.id)?.src || ''" alt="" />
+          }
+        </div>
+        <div class="oe-preview-info">
+          <div class="oe-preview-label">Sélection</div>
+          <div class="oe-preview-name">{{ draftLabel() }}</div>
+        </div>
+        <button type="button" class="oe-change" (click)="clearDraft()">Changer</button>
+      </div>
+
+      <p class="oe-hint">
+        Une fois enregistrée, cette décoration apparaît sur toutes les photos et ne peut être déplacée
+        ou supprimée sans le code admin. Tu pourras la positionner à l'écran après l'enregistrement.
+      </p>
+
+      <div class="oe-footer">
+        @if (current()) {
+          <button type="button" class="pb-btn danger" (click)="remove.emit()">Supprimer l'actuelle</button>
+        }
+        <button type="button" class="pb-btn primary oe-grow" (click)="onSave()">Enregistrer comme officielle</button>
+      </div>
+    } @else {
+      <!-- Tabs -->
+      <div class="oe-tabs">
+        @for (tid of ['stickers','text','image']; track tid) {
+          <button type="button" class="oe-tab" [class.active]="tab() === tid" (click)="tab.set($any(tid))">
+            {{ tid === 'stickers' ? 'Stickers' : tid === 'text' ? 'Texte' : 'Image' }}
+          </button>
+        }
+      </div>
+
+      <div class="oe-body">
+        @if (tab() === 'stickers') {
+          @if (decoService.customStickers().length === 0) {
+            <p class="oe-empty">Aucun sticker disponible.<br />Importe-en un depuis le picker en mode admin.</p>
+          } @else {
+            <div class="oe-grid">
+              @for (s of decoService.customStickers(); track s.id) {
+                <button type="button" class="oe-pick" (click)="pickSticker(s.id)">
+                  <div class="oe-pick-img"><img [src]="s.dataUrl" alt="" /></div>
+                  <span>{{ s.label }}</span>
+                </button>
+              }
+            </div>
+          }
+        }
+
+        @if (tab() === 'text') {
+          <input class="oe-input" type="text" placeholder="Joyeux Anniversaire Marie !" [(ngModel)]="textValue" />
+          <div class="oe-fonts">
+            @for (f of textFonts; track f.value) {
+              <button type="button" class="oe-font" [class.active]="textFont === f"
+                [style.font-family]="f.value" [style.font-weight]="f.weight" (click)="textFont = f">
+                {{ f.label }} — {{ textValue.trim() || 'Aa Bb Cc' }}
+              </button>
+            }
+          </div>
+          <div class="oe-row">
+            <div class="oe-col">
+              <span class="pb-label">Couleur</span>
+              <div class="oe-swatches">
+                @for (c of colorPresets; track c) {
+                  <button type="button" class="oe-swatch" [style.background]="c" [class.active]="textColor === c" (click)="textColor = c"></button>
+                }
+              </div>
+            </div>
+            <div class="oe-col">
+              <span class="pb-label">Fond</span>
+              <div class="oe-swatches">
+                @for (b of bgPresets; track b) {
+                  <button type="button" class="oe-swatch" [class.none]="b === 'none'"
+                    [style.background]="b === 'none' ? 'transparent' : b" [class.active]="textBg === b" (click)="textBg = b"></button>
+                }
+              </div>
+            </div>
+          </div>
+          <button type="button" class="pb-btn primary" [disabled]="!textValue.trim()" (click)="buildText()">Aperçu</button>
+        }
+
+        @if (tab() === 'image') {
+          <div class="oe-imagebox">
+            <div class="oe-imagebox-title">📁 Importer le logo / image officielle</div>
+            <label class="pb-btn primary">
+              Choisir un fichier
+              <input type="file" accept="image/*" class="oe-hidden" (change)="onImageFile($event)" />
+            </label>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

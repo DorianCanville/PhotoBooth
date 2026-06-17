@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.angular/
+
+# Runtime captured photos
+backend/photos/
+frontend/public/photos/
+
+# Runtime local config
+backend/settings.json
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Scratch
+Bug Photo/
