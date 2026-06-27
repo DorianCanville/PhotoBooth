@@ -51,7 +51,8 @@ export class GalleryComponent implements OnChanges {
     this.printing.set(true);
     this.printError.set(null);
     try {
-      await this.storage.print(p.id);
+      // Imprime la version actuellement affichée (onglet « Avec déco » / « Sans déco »).
+      await this.storage.print(p.id, this.viewTab());
       await this.reload();
     } catch {
       this.printError.set('Erreur impression');

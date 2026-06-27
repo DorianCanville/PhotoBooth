@@ -6,10 +6,10 @@ import * as fs from 'fs';
 import photosRouter from './routes/photos';
 import printRouter from './routes/print';
 import settingsRouter from './routes/settings';
+import { PHOTOS_DIR } from './config';
 
 const app = express();
 const PORT = process.env['PORT'] || 3000;
-const PHOTOS_DIR = path.join(__dirname, '../photos');
 
 // Ensure photos dir exists
 if (!fs.existsSync(PHOTOS_DIR)) fs.mkdirSync(PHOTOS_DIR, { recursive: true });

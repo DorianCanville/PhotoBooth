@@ -2,9 +2,10 @@ import { Component, OnInit, signal, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StorageService } from '../../core/services/storage.service';
-import { ThemeService, ThemeName } from '../../core/services/theme.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { DecorationService } from '../../core/services/decoration.service';
 import { OfficialDeco } from '../../core/services/decoration.service';
+import { CameraService } from '../../core/services/camera.service';
 
 type AdminTab = 'settings' | 'stickers' | 'textes' | 'officielle';
 
@@ -19,6 +20,7 @@ export class AdminComponent implements OnInit {
   protected storage = inject(StorageService);
   protected theme = inject(ThemeService);
   protected decoService = inject(DecorationService);
+  private camera = inject(CameraService);
 
   close = output<void>();
 
@@ -31,9 +33,11 @@ export class AdminComponent implements OnInit {
   tabs: AdminTab[] = ['settings', 'stickers', 'textes', 'officielle'];
 
   // Settings
-  selectedTheme = signal<ThemeName>('studio');
   accentColor = signal('#d4a574');
   buttonSize = signal(1);
+  // Rotation par objectif (0 ou 180°) — corrige les caméras montées à l'envers.
+  lensNormalRot = signal(180);
+  lensWideRot = signal(0);
 
   // Official deco
   officialText = signal('');
@@ -47,9 +51,11 @@ export class AdminComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     const s = await this.storage.getSettings();
     this.adminPin = (s['adminPin'] as string) || '1234';
-    this.selectedTheme.set((s['theme'] as ThemeName) || 'studio');
     this.accentColor.set((s['accentOverride'] as string) || '#d4a574');
     this.buttonSize.set((s['buttonSize'] as number) || 1);
+    const lr = (s['lensRotation'] as Record<string, number>) || {};
+    this.lensNormalRot.set(lr['normal'] ?? 180);
+    this.lensWideRot.set(lr['wide'] ?? 0);
     await this.decoService.loadFromStorage();
 
     const od = this.decoService.officialDeco();
@@ -76,11 +82,14 @@ export class AdminComponent implements OnInit {
 
   async saveSettings(): Promise<void> {
     await this.storage.saveSettings({
-      theme: this.selectedTheme(),
+      theme: 'studio',
       accentOverride: this.accentColor(),
       buttonSize: this.buttonSize(),
+      lensRotation: { normal: this.lensNormalRot(), wide: this.lensWideRot() },
     });
-    this.theme.apply(this.selectedTheme(), this.accentColor());
+    // Applique l'orientation à chaud à l'aperçu de capture (toujours actif derrière la modale).
+    this.camera.setLensRotation({ normal: this.lensNormalRot(), wide: this.lensWideRot() });
+    this.theme.apply('studio', this.accentColor());
     document.documentElement.style.setProperty('--pb-btn-scale', String(this.buttonSize()));
     this.activeTab.set('settings');
   }

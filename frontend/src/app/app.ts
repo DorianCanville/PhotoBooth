@@ -47,4 +47,8 @@ export class App implements OnInit {
   onPhotosChanged(count: number): void {
     this.photoCount.set(count);
   }
+
+  onPhotosSaved(n: number): void {
+    this.photoCount.update(c => c + n);
+  }
 }

@@ -1,8 +1,8 @@
 import {
-  Component, OnInit, signal, computed, inject, input, output
+  Component, OnInit, signal, inject, input, output
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CompositingService, FILTERS, FilterValue } from '../../core/services/compositing.service';
+import { CompositingService } from '../../core/services/compositing.service';
 import { DecorationService } from '../../core/services/decoration.service';
 import { StorageService, Photo } from '../../core/services/storage.service';
 import { DecorationLayerComponent } from '../capture/decoration-layer.component';
@@ -24,21 +24,12 @@ export class PhotoEditorComponent implements OnInit {
   decoService = inject(DecorationService);
   storage = inject(StorageService);
 
-  readonly filterList = FILTERS;
-
-  filter = signal<FilterValue>('none');
   showPicker = signal(false);
   saving = signal(false);
   previewUrl = signal<string | null>(null);
   baseImage: HTMLImageElement | null = null;
 
-  readonly filterCss = computed(() =>
-    FILTERS.find(f => f.value === this.filter())?.css ?? 'none'
-  );
-
   async ngOnInit(): Promise<void> {
-    // Init filter from photo
-    this.filter.set(this.photo().filter as FilterValue);
     this.decoService.clear();
 
     // Load base image (raw = without deco)
@@ -56,10 +47,10 @@ export class PhotoEditorComponent implements OnInit {
     try {
       const allDecos = this.decoService.getAllDecos(true);
       const [dataUrl, dataUrlRaw] = await Promise.all([
-        this.compositing.composePhoto(this.baseImage, this.filter(), allDecos, true),
-        this.compositing.composePhoto(this.baseImage, this.filter(), [], false),
+        this.compositing.composePhoto(this.baseImage, allDecos, true),
+        this.compositing.composePhoto(this.baseImage, [], false),
       ]);
-      await this.storage.savePhoto(dataUrl, dataUrlRaw, this.filter());
+      await this.storage.savePhoto(dataUrl, dataUrlRaw);
       this.saved.emit();
       this.close.emit();
     } finally {

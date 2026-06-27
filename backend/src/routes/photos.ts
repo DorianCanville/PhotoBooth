@@ -2,17 +2,16 @@ import { Router, Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { PHOTOS_DIR, META_FILE } from '../config';
 
 const router = Router();
-const PHOTOS_DIR = path.join(__dirname, '../../photos');
-const META_FILE = path.join(PHOTOS_DIR, 'metadata.json');
+if (!fs.existsSync(PHOTOS_DIR)) fs.mkdirSync(PHOTOS_DIR, { recursive: true });
 
 interface PhotoMeta {
   id: string;
   filename: string;
   filenameRaw?: string;
   createdAt: string;
-  filter: string;
   printed: boolean;
 }
 
@@ -49,9 +48,9 @@ router.get('/:id/file', (req: Request, res: Response) => {
   res.sendFile(filePath);
 });
 
-// POST /api/photos  { dataUrl, dataUrlRaw?, filter }
+// POST /api/photos  { dataUrl, dataUrlRaw? }
 router.post('/', (req: Request, res: Response) => {
-  const { dataUrl, dataUrlRaw, filter = 'none' } = req.body;
+  const { dataUrl, dataUrlRaw } = req.body;
   if (!dataUrl) { res.status(400).json({ error: 'dataUrl required' }); return; }
 
   const id = uuidv4();
@@ -64,7 +63,7 @@ router.post('/', (req: Request, res: Response) => {
     fs.writeFileSync(path.join(PHOTOS_DIR, filenameRaw), dataUrlToBuffer(dataUrlRaw));
   }
 
-  const photo: PhotoMeta = { id, filename, filenameRaw, createdAt: new Date().toISOString(), filter, printed: false };
+  const photo: PhotoMeta = { id, filename, filenameRaw, createdAt: new Date().toISOString(), printed: false };
   const meta = readMeta();
   meta.push(photo);
   writeMeta(meta);

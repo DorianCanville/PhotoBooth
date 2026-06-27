@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-export type ThemeName = 'studio' | 'festif' | 'minimal';
+export type ThemeName = 'studio';
 
 export interface ThemeTokens {
   label: string;
@@ -63,60 +63,6 @@ const THEMES: Record<ThemeName, ThemeTokens> = {
     glass:     'rgba(20,20,22,0.55)',
     glassBlur: 'blur(28px) saturate(160%)',
   },
-  festif: {
-    label: 'Festif coloré',
-    fontDisplay: "'Bricolage Grotesque', system-ui, sans-serif",
-    fontUI:      "'Bricolage Grotesque', system-ui, sans-serif",
-    fontMono:    "'Space Mono', ui-monospace, monospace",
-    bg:     '#1a0b2e',
-    bgGrad: 'linear-gradient(135deg, #ff3d8b 0%, #ff8c3d 35%, #ffd23f 70%, #00d4a6 100%)',
-    surface:        'rgba(255,255,255,0.18)',
-    surfaceStrong:  'rgba(255,255,255,0.28)',
-    surfaceHover:   'rgba(255,255,255,0.36)',
-    border:         'rgba(255,255,255,0.30)',
-    borderStrong:   'rgba(255,255,255,0.55)',
-    text:       '#fffdf6',
-    textMuted:  'rgba(255,253,246,0.78)',
-    textFaint:  'rgba(255,253,246,0.5)',
-    accent:     '#ffd23f',
-    accentText: '#1a0b2e',
-    danger:     '#ff3d8b',
-    rSm: '14px', rMd: '22px', rLg: '32px', rPill: '999px',
-    shutterBg:   '#ffd23f',
-    shutterRing: 'rgba(255,255,255,0.5)',
-    shutterCore: '#ff3d8b',
-    labelTransform: 'none', labelTracking: '0', labelWeight: 700,
-    shadow:    '0 18px 50px rgba(255,61,139,0.35), 0 1px 0 rgba(255,255,255,0.18) inset',
-    glass:     'rgba(255,255,255,0.18)',
-    glassBlur: 'blur(24px) saturate(180%)',
-  },
-  minimal: {
-    label: 'Minimal sobre',
-    fontDisplay: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-    fontUI:      "'Helvetica Neue', Helvetica, Arial, sans-serif",
-    fontMono:    "'IBM Plex Mono', ui-monospace, monospace",
-    bg:     '#fafaf8',
-    bgGrad: '#fafaf8',
-    surface:        'rgba(255,255,255,0.78)',
-    surfaceStrong:  'rgba(255,255,255,0.92)',
-    surfaceHover:   'rgba(0,0,0,0.04)',
-    border:         'rgba(0,0,0,0.10)',
-    borderStrong:   'rgba(0,0,0,0.40)',
-    text:       '#0a0a0a',
-    textMuted:  'rgba(10,10,10,0.58)',
-    textFaint:  'rgba(10,10,10,0.36)',
-    accent:     '#0a0a0a',
-    accentText: '#fafaf8',
-    danger:     '#c43030',
-    rSm: '2px', rMd: '4px', rLg: '6px', rPill: '999px',
-    shutterBg:   '#0a0a0a',
-    shutterRing: 'rgba(0,0,0,0.18)',
-    shutterCore: '#0a0a0a',
-    labelTransform: 'uppercase', labelTracking: '0.18em', labelWeight: 500,
-    shadow:    '0 1px 0 rgba(0,0,0,0.06)',
-    glass:     'rgba(255,255,255,0.88)',
-    glassBlur: 'blur(12px) saturate(120%)',
-  },
 };
 
 @Injectable({ providedIn: 'root' })
@@ -160,9 +106,5 @@ export class ThemeService {
     r.style.setProperty('--pb-label-transform', t.labelTransform);
     r.style.setProperty('--pb-label-tracking',  t.labelTracking);
     r.style.setProperty('--pb-label-weight',    String(t.labelWeight));
-  }
-
-  getThemes(): { name: ThemeName; label: string }[] {
-    return (Object.entries(THEMES) as [ThemeName, ThemeTokens][]).map(([name, t]) => ({ name, label: t.label }));
   }
 }

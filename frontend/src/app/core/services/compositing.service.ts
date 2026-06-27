@@ -1,15 +1,5 @@
 import { Injectable } from '@angular/core';
 
-export type FilterValue = 'none' | 'bw' | 'sepia' | 'warm' | 'cold';
-
-export const FILTERS: { value: FilterValue; label: string; css: string }[] = [
-  { value: 'none',  label: 'Aucun', css: 'none' },
-  { value: 'bw',    label: 'N&B',   css: 'grayscale(1) contrast(1.05)' },
-  { value: 'sepia', label: 'Sépia', css: 'sepia(0.85) saturate(1.2)' },
-  { value: 'warm',  label: 'Chaud', css: 'saturate(1.15) hue-rotate(-8deg) brightness(1.05)' },
-  { value: 'cold',  label: 'Froid', css: 'saturate(1.05) hue-rotate(12deg) brightness(0.98)' },
-];
-
 export interface Decoration {
   id: string;
   kind: 'sticker' | 'text' | 'image';
@@ -32,8 +22,11 @@ export interface Decoration {
   imageUrl?: string; // raw data URL, kept so image decos survive a reload
 }
 
-export const PHOTO_W = 1600;
-export const PHOTO_H = 1200;
+export const PHOTO_W = 2400;
+export const PHOTO_H = 1800;
+// Plafond de largeur de sortie : limite la taille fichier / le temps canvas
+// même quand la source still dépasse (capteur 64MP, etc.).
+export const PHOTO_MAX_W = 4000;
 
 const TEXT_FONTS: { label: string; value: string; weight: number }[] = [
   { label: 'Élégant (serif)', value: "Georgia, 'Times New Roman', serif", weight: 600 },
@@ -72,28 +65,50 @@ export class CompositingService {
 
   async composePhoto(
     source: HTMLCanvasElement | HTMLImageElement,
-    filter: FilterValue,
     decos: Decoration[],
     withDeco: boolean,
-    W = PHOTO_W,
-    H = PHOTO_H,
+    W?: number,
+    H?: number,
   ): Promise<string> {
-    const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d')!;
+    // Format de sortie 4:3 (impression). On garde ce ratio mais on adapte la
+    // résolution à la source : pas d'agrandissement d'une petite source, et on
+    // exploite la pleine résolution d'une capture still (moins de grain).
+    const dstAspect = PHOTO_W / PHOTO_H;
+    const srcW = source instanceof HTMLCanvasElement ? source.width : source.naturalWidth;
+    const srcH = source instanceof HTMLCanvasElement ? source.height : source.naturalHeight;
+    const srcAspect = srcW / srcH;
 
-    const filterCss = FILTERS.find(f => f.value === filter)?.css ?? 'none';
-    ctx.filter = filterCss;
-    ctx.drawImage(source, 0, 0, W, H);
-    ctx.filter = 'none';
+    // Recadrage « cover » : on remplit la sortie en préservant les proportions
+    // de la source (pas d'étirement), en rognant les bords qui dépassent.
+    let cropW = srcW, cropH = srcH, cropX = 0, cropY = 0;
+    if (srcAspect > dstAspect) {
+      cropW = srcH * dstAspect;
+      cropX = (srcW - cropW) / 2;
+    } else {
+      cropH = srcW / dstAspect;
+      cropY = (srcH - cropH) / 2;
+    }
+
+    // Résolution de sortie : largeur native du crop, bornée à [PHOTO_W, PHOTO_MAX_W].
+    // Un appelant peut toujours forcer W/H explicitement.
+    const outW = W ?? Math.round(Math.min(Math.max(cropW, PHOTO_W), PHOTO_MAX_W));
+    const outH = H ?? Math.round(outW / dstAspect);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = outW; canvas.height = outH;
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.drawImage(source, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
 
     if (withDeco) {
       for (const d of decos) {
-        this.drawDecoration(ctx, d, W, H);
+        this.drawDecoration(ctx, d, outW, outH);
       }
     }
 
-    return canvas.toDataURL('image/jpeg', 0.92);
+    return canvas.toDataURL('image/jpeg', 0.95);
   }
 
   private drawDecoration(ctx: CanvasRenderingContext2D, deco: Decoration, W: number, H: number): void {

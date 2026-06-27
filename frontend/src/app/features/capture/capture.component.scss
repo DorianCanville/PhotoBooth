@@ -60,7 +60,9 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* Flux affiché tel quel : on voit le cadre complet du capteur, quitte à
+     avoir des bordures noires (letterbox) plutôt que de rogner. */
+  object-fit: contain;
   transform-origin: center;
   transition: opacity 0.4s, transform 0.4s;
   z-index: 1;
@@ -182,6 +184,11 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+
+  // Le chip-group s'étire sur la largeur de la colonne (min 280px) ; sans ceci
+  // les chips restent collés à gauche et laissent un écart vide à droite.
+  .pb-chip-group { width: 100%; }
+  .pb-chip { flex: 1; }
 }
 
 .deck-divider {
@@ -384,12 +391,6 @@
   height: 100%;
   object-fit: contain;
   display: block;
-}
-
-.review-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
 }
 
 .review-actions {

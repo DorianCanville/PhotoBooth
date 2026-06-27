@@ -47,16 +47,6 @@
       @if (activeTab() === 'settings') {
         <div class="tab-content">
           <div class="settings-row">
-            <label class="settings-label">Thème</label>
-            <div class="pb-chips">
-              @for (t of theme.getThemes(); track t.name) {
-                <button class="pb-chip" [class.active]="selectedTheme() === t.name" (click)="selectedTheme.set(t.name)">
-                  {{ t.label }}
-                </button>
-              }
-            </div>
-          </div>
-          <div class="settings-row">
             <label class="settings-label">Couleur accent</label>
             <input type="color" [value]="accentColor()" (input)="accentColor.set($any($event.target).value)" class="color-picker" />
           </div>
@@ -64,6 +54,20 @@
             <label class="settings-label">Taille boutons ({{ buttonSize().toFixed(1) }}×)</label>
             <input type="range" min="0.8" max="1.5" step="0.1"
               [value]="buttonSize()" (input)="buttonSize.set(+$any($event.target).value)" class="range-input" />
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Orientation 64MP (normal)</label>
+            <button class="pb-btn" [class.pb-btn-accent]="lensNormalRot() === 180"
+              (click)="lensNormalRot.set(lensNormalRot() === 180 ? 0 : 180)">
+              {{ lensNormalRot() === 180 ? 'Retournée 180°' : 'Normale 0°' }}
+            </button>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Orientation grand-angle (wide)</label>
+            <button class="pb-btn" [class.pb-btn-accent]="lensWideRot() === 180"
+              (click)="lensWideRot.set(lensWideRot() === 180 ? 0 : 180)">
+              {{ lensWideRot() === 180 ? 'Retournée 180°' : 'Normale 0°' }}
+            </button>
           </div>
           <div class="settings-actions">
             <button class="pb-btn pb-btn-accent" (click)="saveSettings()">Enregistrer</button>

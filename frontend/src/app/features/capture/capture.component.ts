@@ -5,7 +5,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { CameraService, LensMode } from '../../core/services/camera.service';
 import { AudioService } from '../../core/services/audio.service';
-import { CompositingService, FILTERS, FilterValue } from '../../core/services/compositing.service';
+import { CompositingService } from '../../core/services/compositing.service';
 import { StorageService } from '../../core/services/storage.service';
 import { DecorationService, OfficialDeco, CustomSticker } from '../../core/services/decoration.service';
 import { DecorationLayerComponent } from './decoration-layer.component';
@@ -18,7 +18,7 @@ export type CaptureMode = 'single' | 'burst';
 const TIMER_PRESETS = [3, 5, 10, 15];
 const BURST_COUNT = 4;
 const BURST_INTERVAL_MS = 2000;
-const LENS_ZOOM: Record<LensMode, number> = { normal: 1.35, wide: 1 };
+const LENS_ZOOM: Record<LensMode, number> = { normal: 1, wide: 1 };
 
 @Component({
   selector: 'app-capture',
@@ -41,9 +41,10 @@ export class CaptureComponent implements AfterViewInit, OnDestroy {
 
   openGallery = output<void>();
   openAdmin = output<void>();
+  /** Nombre de photos venant d'être sauvegardées (met à jour le compteur galerie). */
+  photosSaved = output<number>();
 
   readonly timerPresets = TIMER_PRESETS;
-  readonly filterList = FILTERS;
   readonly lensModes: LensMode[] = ['normal', 'wide'];
   readonly captureModes: CaptureMode[] = ['single', 'burst'];
   readonly burstDots = [0, 1, 2, 3];
@@ -51,8 +52,6 @@ export class CaptureComponent implements AfterViewInit, OnDestroy {
   lens = signal<LensMode>('normal');
   captureMode = signal<CaptureMode>('single');
   timerSeconds = signal(5);
-  filter = signal<FilterValue>('none');
-  reviewFilter = signal<FilterValue>('none');
   controlsCollapsed = signal(false);
 
   phase = signal<'preview' | 'countdown' | 'capturing' | 'review'>('preview');
@@ -68,15 +67,6 @@ export class CaptureComponent implements AfterViewInit, OnDestroy {
 
   capturedPhotos = signal<{ baseCanvas: HTMLCanvasElement; dataUrl: string; dataUrlRaw: string }[]>([]);
 
-  readonly filterCss = computed(() =>
-    FILTERS.find(f => f.value === this.filter())?.css ?? 'none'
-  );
-
-  readonly reviewFilterCss = computed(() =>
-    FILTERS.find(f => f.value === this.reviewFilter())?.css ?? 'none'
-  );
-
-  // re-bake preview when filter changes in review
   readonly reviewPreviewUrl = computed(() => {
     const photos = this.capturedPhotos();
     if (!photos.length) return null;
@@ -84,7 +74,13 @@ export class CaptureComponent implements AfterViewInit, OnDestroy {
     return photos[0]?.dataUrl ?? null;
   });
 
-  ngAfterViewInit(): void {
+  async ngAfterViewInit(): Promise<void> {
+    // Applique la rotation par objectif définie en admin avant d'ouvrir le flux.
+    try {
+      const s = await this.storage.getSettings();
+      const lr = s['lensRotation'] as Partial<Record<LensMode, number>> | undefined;
+      if (lr) this.camera.setLensRotation(lr);
+    } catch { /* backend indisponible : on garde les valeurs par défaut */ }
     this.camera.start(this.videoElRef.nativeElement, this.lens());
   }
 
@@ -116,7 +112,6 @@ export class CaptureComponent implements AfterViewInit, OnDestroy {
 
     this.countdownN.set(0);
     this.phase.set('capturing');
-    this.reviewFilter.set(this.filter());
 
     if (this.captureMode() === 'single') {
       await this.captureSingle();
@@ -128,14 +123,16 @@ export class CaptureComponent implements AfterViewInit, OnDestroy {
   }
 
   private async captureSingle(): Promise<void> {
+    // Capture directement depuis le flux live : pas de bascule de résolution
+    // (qui bloquerait le pipeline libcamera CSI — voir CameraService.start).
     const frame = this.camera.captureFrame(LENS_ZOOM[this.lens()]);
     if (!frame) return;
     this.doFlash();
     await new Promise(r => setTimeout(r, 100));
     const allDecos = this.decoService.getAllDecos(true);
     const [dataUrl, dataUrlRaw] = await Promise.all([
-      this.compositing.composePhoto(frame, this.filter(), allDecos, true),
-      this.compositing.composePhoto(frame, this.filter(), [], false),
+      this.compositing.composePhoto(frame, allDecos, true),
+      this.compositing.composePhoto(frame, [], false),
     ]);
     this.capturedPhotos.set([{ baseCanvas: frame, dataUrl, dataUrlRaw }]);
   }
@@ -159,8 +156,8 @@ export class CaptureComponent implements AfterViewInit, OnDestroy {
       this.doFlash();
       await new Promise(r => setTimeout(r, 120));
       const [dataUrl, dataUrlRaw] = await Promise.all([
-        this.compositing.composePhoto(frame, this.filter(), allDecos, true),
-        this.compositing.composePhoto(frame, this.filter(), [], false),
+        this.compositing.composePhoto(frame, allDecos, true),
+        this.compositing.composePhoto(frame, [], false),
       ]);
       photos.push({ baseCanvas: frame, dataUrl, dataUrlRaw });
       await new Promise(r => setTimeout(r, 300));
@@ -176,9 +173,11 @@ export class CaptureComponent implements AfterViewInit, OnDestroy {
   }
 
   async keep(): Promise<void> {
+    const saved = this.capturedPhotos().length;
     for (const p of this.capturedPhotos()) {
-      await this.storage.savePhoto(p.dataUrl, p.dataUrlRaw, this.reviewFilter());
+      await this.storage.savePhoto(p.dataUrl, p.dataUrlRaw);
     }
+    if (saved > 0) this.photosSaved.emit(saved);
     this.resetToPreview();
   }
 

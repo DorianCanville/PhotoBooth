@@ -49,7 +49,7 @@
   height: 100%;
   object-fit: contain;
   display: block;
-  border-radius: var(--pb-radius);
+  border-radius: var(--pb-r-md);
 }
 
 .editor-bottom-bar {
@@ -59,21 +59,6 @@
   padding: 20px 48px;
   border-top: 1px solid var(--pb-border);
   flex-shrink: 0;
-}
-
-.control-group {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.control-label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--pb-text-muted);
-  white-space: nowrap;
 }
 
 .deco-badge {

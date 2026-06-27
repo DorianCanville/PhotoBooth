@@ -13,6 +13,9 @@ const DEFAULTS = {
   officialDeco: null as unknown,
   customStickers: [] as unknown[],
   savedTexts: [] as string[],
+  // Rotation d'aperçu/capture par objectif (degrés, 0 ou 180). Les caméras
+  // montées à l'envers se corrigent ici sans toucher au code.
+  lensRotation: { normal: 180, wide: 0 } as Record<string, number>,
 };
 
 function readSettings() {

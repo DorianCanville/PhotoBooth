@@ -10,8 +10,7 @@
     playsinline
     muted
     class="camera-feed"
-    [style.filter]="filterCss()"
-    [style.transform]="lens() === 'normal' ? 'scaleX(-1) scale(1.35)' : 'scaleX(-1)'"
+    [style.transform]="'scaleX(-1) rotate(' + camera.rotationDeg() + 'deg)'"
     [style.opacity]="camera.ready() ? 1 : 0"
   ></video>
 
@@ -77,7 +76,11 @@
 
         @if (decoService.officialDeco()) {
           <button class="pb-pill-btn" [class.active]="decoService.officialDeco()?.enabled" (click)="toggleOfficial()">
-            {{ decoService.officialDeco()?.enabled ? '🔒' : '🚫' }} Officielle {{ decoService.officialDeco()?.enabled ? 'ON' : 'OFF' }}
+            @if (decoService.officialDeco()?.enabled) {
+              🔒 Officielle ON
+            } @else {
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg> Officielle OFF
+            }
           </button>
         }
 
@@ -246,20 +249,10 @@
           }
         </div>
 
-        <!-- Filter selector in review -->
-        <div class="review-filter-row">
-          <span class="pb-label">Filtre</span>
-          <div class="pb-chip-group">
-            @for (f of filterList; track f.value) {
-              <button class="pb-chip" [class.active]="reviewFilter() === f.value" (click)="reviewFilter.set(f.value)">{{ f.label }}</button>
-            }
-          </div>
-        </div>
-
         <div class="review-actions">
           <button class="pb-btn danger" (click)="retakeAll()">Refaire</button>
           <button class="pb-btn" (click)="keep()">Garder</button>
-          <button class="pb-btn primary" (click)="keep()">🖨 Garder &amp; imprimer</button>
+          <button class="pb-btn primary" (click)="keep()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg> Garder &amp; imprimer</button>
         </div>
 
         <button class="review-cancel" (click)="retakeAll()">Annuler la prise</button>

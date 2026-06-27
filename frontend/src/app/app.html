@@ -6,6 +6,7 @@
       [photoCount]="photoCount()"
       (openGallery)="showGallery.set(!showGallery())"
       (openAdmin)="showAdmin.set(true)"
+      (photosSaved)="onPhotosSaved($event)"
     ></app-capture>
 
     <!-- Gallery drawer — always in DOM, slides in/out -->

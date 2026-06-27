@@ -1,14 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { FilterValue } from './compositing.service';
 
 export interface Photo {
   id: string;
   filename: string;
   filenameRaw?: string;
   createdAt: string;
-  filter: FilterValue;
   printed: boolean;
   // client-side only (dataUrls from session, before persisted)
   dataUrl?: string;
@@ -25,9 +23,9 @@ export class StorageService {
     return firstValueFrom(this.http.get<Photo[]>(`${this.apiBase}/photos`));
   }
 
-  async savePhoto(dataUrl: string, dataUrlRaw: string | undefined, filter: FilterValue): Promise<Photo> {
+  async savePhoto(dataUrl: string, dataUrlRaw: string | undefined): Promise<Photo> {
     return firstValueFrom(
-      this.http.post<Photo>(`${this.apiBase}/photos`, { dataUrl, dataUrlRaw, filter })
+      this.http.post<Photo>(`${this.apiBase}/photos`, { dataUrl, dataUrlRaw })
     );
   }
 
@@ -48,9 +46,9 @@ export class StorageService {
     return firstValueFrom(this.http.put<Record<string, unknown>>(`${this.apiBase}/settings`, patch));
   }
 
-  async print(photoId: string, copies = 1): Promise<{ ok: boolean; jobInfo?: string }> {
+  async print(photoId: string, variant: 'deco' | 'raw' = 'deco'): Promise<{ ok: boolean; jobInfo?: string }> {
     return firstValueFrom(
-      this.http.post<{ ok: boolean; jobInfo?: string }>(`${this.apiBase}/print`, { photoId, copies })
+      this.http.post<{ ok: boolean; jobInfo?: string }>(`${this.apiBase}/print`, { photoId, variant })
     );
   }
 }

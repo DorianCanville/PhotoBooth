@@ -25,7 +25,7 @@
       <button class="gallery-item" (click)="openPhoto(p)">
         <img [src]="viewTab() === 'raw' && photoRawUrl(p) ? photoRawUrl(p)! : photoFileUrl(p)" class="gallery-thumb" />
         @if (p.printed) {
-          <div class="printed-badge" title="Imprimée">🖨</div>
+          <div class="printed-badge" title="Imprimée"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></div>
         }
         <div class="item-footer">
           <span>{{ p.createdAt | date:'HH:mm' }}</span>
@@ -63,7 +63,12 @@
 
     <div class="viewer-footer">
       <button class="pb-btn primary" (click)="printPhoto(selected()!)" [disabled]="printing()">
-        {{ printing() ? 'Impression…' : '🖨 Imprimer' }}
+        @if (printing()) {
+          Impression…
+        } @else {
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+          {{ viewTab() === 'raw' ? 'Imprimer (sans déco)' : 'Imprimer (avec déco)' }}
+        }
       </button>
       <button class="pb-btn" (click)="edit.emit(selected()!); closeViewer()">Éditer</button>
       @if (printError()) { <span class="print-error">{{ printError() }}</span> }
